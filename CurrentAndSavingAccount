@@ -1,0 +1,161 @@
+//model class
+
+package Models;
+
+import Exception.InsufficientFundsException;
+
+public class Account {
+	protected String accNo;
+	protected String name;
+	protected double balance;
+
+	public Account(String accNo, String name, double balance) {
+		this.accNo = accNo;
+		this.name = name;
+		this.balance = balance;
+	}
+
+	public void deposit(double amount) {
+		balance += amount;
+		System.out.println("Amount " + amount + " deposited successfully.");
+	}
+
+	public void withdraw(double amount) throws InsufficientFundsException {
+		if (balance >= amount) {
+			balance -= amount;
+			System.out.println("Amount " + amount + " withdrawn successfully.");
+		} else {
+			throw new InsufficientFundsException("Insufficient balance");
+		}
+	}
+
+	public void displayBalance() {
+		System.out.println("Current balance: " + balance);
+	}
+
+}
+
+
+
+//current account class
+
+package Models;
+
+import Exception.InsufficientFundsException;
+
+public class CurrentAccount extends Account {
+
+	private final double OVER_DRAFT_LIMIT = 5000;
+
+	public CurrentAccount(String accNo, String name, double balance) {
+		super(accNo, name, balance);
+	}
+
+	@Override
+	public void withdraw(double amount) throws InsufficientFundsException {
+		if (balance + OVER_DRAFT_LIMIT >= amount) {
+			balance -= amount;
+			System.out.println("Amount " + amount + " withdrawn successfully.");
+		} else {
+			throw new InsufficientFundsException("Insufficient balance, overdraft limit exceeded.");
+		}
+	}
+}
+
+
+//saving account class
+
+
+import Exception.InsufficientFundsException;
+
+public class SavingAccount extends Account {
+	 private final double MIN_BALANCE = 1000;
+
+	    public SavingAccount(String accNo, String name, double balance) {
+	        super(accNo, name, balance);
+	    }
+
+	    @Override
+	    public void withdraw(double amount) throws InsufficientFundsException {
+	        if (balance - amount >= MIN_BALANCE) {
+	            balance -= amount;
+	            System.out.println("Amount " + amount + " withdrawn successfully.");
+	        } else {
+	            throw new InsufficientFundsException("Insufficient balance, minimum balance not maintained.");
+	        }
+	    }
+}
+
+
+//test class
+
+
+package Tests;
+
+import java.util.Scanner;
+
+import Exception.InsufficientFundsException;
+import Models.Account;
+import Models.CurrentAccount;
+import Models.SavingAccount;
+
+public class CurrentSavingTests {
+	public static void main(String[] args) {
+		Scanner scanner = new Scanner(System.in);
+		Account account = null;
+
+		System.out.println("1. Create Current Account");
+		System.out.println("2. Create Savings Account");
+		System.out.println("3. Deposit");
+		System.out.println("4. Withdraw");
+		System.out.println("5. Display Balance");
+		System.out.println("6. Exit");
+
+		while (true) {
+			System.out.print("Enter your choice: ");
+			int choice = scanner.nextInt();
+
+			switch (choice) {
+			case 1:
+				System.out.print("Enter account number: ");
+				String accNo = scanner.next();
+				System.out.print("Enter name: ");
+				String name = scanner.next();
+				System.out.print("Enter initial balance: ");
+				double balance = scanner.nextDouble();
+				account = new CurrentAccount(accNo, name, balance);
+				break;
+			case 2:
+				System.out.print("Enter account number: ");
+				accNo = scanner.next();
+				System.out.print("Enter name: ");
+				name = scanner.next();
+				System.out.print("Enter initial balance: ");
+				balance = scanner.nextDouble();
+				account = new SavingAccount(accNo, name, balance);
+				break;
+			case 3:
+				System.out.print("Enter amount to deposit: ");
+				double depositAmount = scanner.nextDouble();
+				account.deposit(depositAmount);
+				break;
+			case 4:
+				System.out.print("Enter amount to withdraw: ");
+				double withdrawAmount = scanner.nextDouble();
+				try {
+					account.withdraw(withdrawAmount);
+				} catch (InsufficientFundsException e) {
+					System.out.println(e.getMessage());
+				}
+				break;
+			case 5:
+				account.displayBalance();
+				break;
+			case 6:
+				System.exit(0);
+			default:
+				System.out.println("Invalid choice");
+			}
+		}
+	}
+}
