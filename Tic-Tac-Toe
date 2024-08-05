@@ -1,1 +1,270 @@
+package Package;
+
+public interface IGame {
+	void play(int x, int y);
+
+	void Board();
+
+	boolean isGameOver();
+}
+
+// player enum
+
+package Package;
+
+public enum Player {
+X,O,EMPTY
+}
+
+//model class
+
+package Package;
+
+public class TicTacToe implements IGame {
+	private Player[][] board;
+	private Player currentPlayer;
+
+	public TicTacToe() {
+		board = new Player[3][3];
+		initializeBoard();
+		currentPlayer = Player.X;
+	}
+
+	public void initializeBoard() {
+		for (int i = 0; i < board.length; i++) {
+			for (int j = 0; j < board[i].length; j++) {
+				board[i][j] = Player.EMPTY;
+			}
+		}
+	}
+
+	public void Board() {
+		System.out.println(" -------------");
+		for (int i = 0; i < board.length; i++) {
+			System.out.print(" | ");
+			for (int j = 0; j < board[i].length; j++) {
+				System.out.print(board[i][j] == Player.EMPTY ? " " : board[i][j]);
+				System.out.print(" | ");
+			}
+			System.out.println();
+			System.out.println(" -------------");
+		}
+	}
+
+	@Override
+	public void play(int x, int y) {
+		try {
+			if (x < 0 || x >= board.length || y < 0 || y >= board[0].length) {
+				throw new IllegalArgumentException("Please enter values between 0 and 2.");
+			}
+			if (board[x][y] != Player.EMPTY) {
+				throw new IllegalStateException("Place is already occupied.");
+			}
+			board[x][y] = currentPlayer;
+			currentPlayer = (currentPlayer == Player.X) ? Player.O : Player.X;
+		} catch (IllegalArgumentException | IllegalStateException e) {
+			System.out.println(e.getMessage());
+		}
+	}
+
+	@Override
+	public boolean isGameOver() {
+		Player winner = getWinner();
+		if (winner != Player.EMPTY) {
+			System.out.println("Player " + winner + " wins!");
+			return true;
+		}
+		if (isBoardFull()) {
+			System.out.println("The game is a draw!");
+			return true;
+		}
+		return false;
+	}
+
+	public Player getWinner() {
+		Player winner = checkRows();
+		if (winner != Player.EMPTY) {
+			return winner;
+		}
+		winner = checkColumns();
+		if (winner != Player.EMPTY) {
+			return winner;
+		}
+		return checkDiagonals();
+	}
+
+	private Player checkRows() {
+		for (int i = 0; i < 3; i++) {
+			if (board[i][0] == board[i][1] && board[i][1] == board[i][2] && board[i][0] != Player.EMPTY) {
+				return board[i][0];
+			}
+		}
+		return Player.EMPTY;
+	}
+
+	private Player checkColumns() {
+		for (int i = 0; i < 3; i++) {
+			if (board[0][i] == board[1][i] && board[1][i] == board[2][i] && board[0][i] != Player.EMPTY) {
+				return board[0][i];
+			}
+		}
+		return Player.EMPTY;
+	}
+
+	private Player checkDiagonals() {
+		if (board[0][0] == board[1][1] && board[1][1] == board[2][2] && board[0][0] != Player.EMPTY) {
+			return board[0][0];
+		}
+		if (board[0][2] == board[1][1] && board[1][1] == board[2][0] && board[0][2] != Player.EMPTY) {
+			return board[0][2];
+		}
+		return Player.EMPTY;
+	}
+
+	private boolean isBoardFull() {
+		for (int i = 0; i < board.length; i++) {
+			for (int j = 0; j < board[i].length; j++) {
+				if (board[i][j] == Player.EMPTY) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+	public Player[][] getBoard() {
+		return board;
+	}
+
+	public Player getCurrentPlayer() {
+		return currentPlayer;
+	}
+}
+
+
+//facad class
+
+package Package;
+
+import java.util.Scanner;
+
+public class GameFacad {
+	private TicTacToe tictactoe;
+
+	public GameFacad() {
+		tictactoe = new TicTacToe();
+
+	}
+
+	public void playGame() {
+		Scanner scanner = new Scanner(System.in);
+		while (!tictactoe.isGameOver()) {
+			tictactoe.Board();
+			System.out.println("Enter Row and Column :");
+			int row = scanner.nextInt();
+			int column = scanner.nextInt();
+			tictactoe.play(row, column);
+		}
+		tictactoe.Board();
+		System.out.println("Game Over !!");
+	}
+}
+
+//test class with test cases
+
+package Package;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
+public class TicTacToeTest {
+	private TicTacToe game;
+
+	@BeforeEach
+	public void setUp() {
+		game = new TicTacToe();
+	}
+
+	@Test
+	public void testBoardInitialization() {
+		for (int i = 0; i < 3; i++) {
+			for (int j = 0; j < 3; j++) {
+				assertEquals(Player.EMPTY, game.getBoard()[i][j]);
+			}
+		}
+	}
+
+	@Test
+	public void testCurrentPlayerInitialization() {
+		assertEquals(Player.X, game.getCurrentPlayer());
+	}
+
+	@Test
+	public void testPlayValidMove() {
+		game.play(0, 0);
+		assertEquals(Player.X, game.getBoard()[0][0]);
+		assertEquals(Player.O, game.getCurrentPlayer());
+	}
+
+	@Test
+	public void testPlayOutOfBounds() {
+		assertThrows(IllegalArgumentException.class, () -> game.play(-1, 0));
+		assertThrows(IllegalArgumentException.class, () -> game.play(0, 3));
+	}
+
+	@Test
+	public void testPlayOnOccupiedSpot() {
+		game.play(0, 0);
+		assertThrows(IllegalStateException.class, () -> game.play(0, 0));
+	}
+
+	@Test
+	public void testWinInRow() {
+		game.play(0, 0); 
+		game.play(1, 0); 
+		game.play(0, 1); 
+		game.play(1, 1); 
+		game.play(0, 2); 
+		assertTrue(game.isGameOver());
+		assertEquals(Player.X, game.getWinner());
+	}
+
+	@Test
+	public void testWinInColumn() {
+		game.play(0, 0); 
+		game.play(0, 1); 
+		game.play(1, 0); 
+		game.play(1, 1); 
+		game.play(2, 0); 
+		assertTrue(game.isGameOver());
+		assertEquals(Player.X, game.getWinner());
+	}
+
+	@Test
+	public void testWinInDiagonal() {
+		game.play(0, 0); 
+		game.play(1, 0); 
+		game.play(1, 1); 
+		game.play(2, 0); 
+		game.play(2, 2); 
+		assertTrue(game.isGameOver());
+		assertEquals(Player.X, game.getWinner());
+	}
+
+	@Test
+	public void testDraw() {
+		game.play(0, 0); 
+		game.play(0, 1);
+		game.play(0, 2);
+		game.play(1, 0); 
+		game.play(1, 2); 
+		game.play(1, 1); 
+		game.play(2, 0); 
+		game.play(2, 2); 
+		game.play(2, 1); 
+		assertTrue(game.isGameOver());
+		assertEquals(Player.EMPTY, game.getWinner());
+	}
+}
 
